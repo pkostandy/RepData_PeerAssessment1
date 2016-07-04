@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 
@@ -11,15 +6,24 @@ output:
 ## Loading and preprocessing the data
 
 First, We'll start by getting the data from the zip file and examining it.
-```{r}
+
+```r
 unzip("activity.zip")
 raw <- read.csv("activity.csv")
 str(raw)
 ```
 
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
 We'll then remove the rows with missing data to simplify calculations in the
 first few questions. We'll also remove factor levels which are not in use.
-```{r}
+
+```r
 rawComp <- raw[complete.cases(raw),]
 rawComp$date <- droplevels(rawComp$date)
 ```
@@ -28,24 +32,31 @@ rawComp$date <- droplevels(rawComp$date)
 
 
 ## What is mean total number of steps taken per day?
-```{r}
+
+```r
 sums <- by(rawComp$steps, rawComp$date, sum)
 hist(sums,
      main = "Histogram of Total number of steps per day",
      xlab = "Total number of steps per day")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+```r
 meanSteps <- mean(sums)
 medianSteps <- median(sums)
 ```
 
-The **mean** total number of steps per day is **`r meanSteps`**.  
-The **median** total number of steps per day is **`r medianSteps`**.
+The **mean** total number of steps per day is **1.0766189\times 10^{4}**.  
+The **median** total number of steps per day is **10765**.
 
 
 
 
 ## What is the average daily activity pattern?
 
-```{r}
+
+```r
 means <- by(rawComp$steps, rawComp$interval, mean)
 means2 <- cbind(names(means), as.vector(means))
 
@@ -58,14 +69,18 @@ plot(activityts,
      main = "Average number of steps during the day",
      xlab = "Time (minutes)",
      ylab = "Number of steps")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
 indexMax <- which.max(means2[, 2])
 indexMax5 <- 5 * indexMax
 intervalMax <- means2[indexMax, 1]
 ```
 
 The time interval with the highest average of number steps is
-**`r intervalMax`**, which occurs **`r indexMax5`** minutes after midnight.
+**835**, which occurs **520** minutes after midnight.
 
 
 
@@ -73,15 +88,17 @@ The time interval with the highest average of number steps is
 ## Imputing missing values
 
 First, we'll determine the number of missing values in the data.
-```{r}
+
+```r
 numOfNAs <- sum(is.na(raw$steps))
 ```
 
-The number of NA values is **`r numOfNAs`**.
+The number of NA values is **2304**.
 
 Now, we're going to fill in the missing values with the mean number of steps
 specific to the interval. Earlier, we created `means2`, which is a matrix containing the mean number of steps matched with the corresponding time interval.
-```{r}
+
+```r
 rawMod <- raw
 
 # For every missing value, find the corresponding mean number of steps for that
@@ -94,18 +111,31 @@ for (i in 1:nrow(raw)) {
 str(rawMod)
 ```
 
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : num  1.717 0.3396 0.1321 0.1509 0.0755 ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
 Now we have a modified raw data set `rawMod` where the missing values have been imputed. We'll create a histogram like the one above and we'll calculate the mean and median values for the total number of steps per day.
-```{r}
+
+```r
 sums2 <- by(rawMod$steps, rawMod$date, sum)
 hist(sums2,
      main = "Histogram of Total number of steps per day",
      xlab = "Total number of steps per day")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+```r
 meanSteps2 <- mean(sums2)
 medianSteps2 <- median(sums2)
 ```
 
-The **mean** total number of steps per day based on the modified raw data is **`r meanSteps2`**.  
-The **median** total number of steps per day based on the modified raw data is **`r medianSteps2`**.
+The **mean** total number of steps per day based on the modified raw data is **1.0766189\times 10^{4}**.  
+The **median** total number of steps per day based on the modified raw data is **1.0766189\times 10^{4}**.
 
 The new mean and median happen to be very close to the ones we calculated
 before. It's not surprising that the values are close since the imputed values
@@ -118,7 +148,8 @@ the week for which the entry was taken. We'll then create a variable `dayType`,
 that is set to "Weekday" or "Weekend" based on the value of `dayOfWeek`. We'll
 then add `dayType` to the `rawComp` data frame.
 
-```{r}
+
+```r
 dayOfWeek <- weekdays(as.POSIXct(rawMod[, 2]))
 dayType <- dayOfWeek
 dayType[dayType == "Saturday"] <- "Weekend"
@@ -129,7 +160,8 @@ rawMod <- cbind(rawMod, dayType)
 
 Now we're going to plot the time series comparing weekday and weekend averages.
 
-```{r}
+
+```r
 library(lattice)
 
 means3 <- by(rawMod$steps, list(rawMod$interval, rawMod$dayType), mean)
@@ -140,5 +172,7 @@ class(means4) <- "numeric"
 activityts2 <- ts(means4[, 1:2], frequency = 0.2)
 xyplot(activityts2, main = "Average number of steps over time by type of day", xlab = "Time (minutes)", ylab = "Number of steps")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 
